@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29418.71
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideYo", "VideYo\VideYo.csproj", "{0DB56CFC-BD05-4931-9F7C-7118F193450B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0DB56CFC-BD05-4931-9F7C-7118F193450B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DB56CFC-BD05-4931-9F7C-7118F193450B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DB56CFC-BD05-4931-9F7C-7118F193450B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DB56CFC-BD05-4931-9F7C-7118F193450B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C2757783-8FFA-47E8-A63E-FBA6D6E5A03D}
+	EndGlobalSection
+EndGlobal
