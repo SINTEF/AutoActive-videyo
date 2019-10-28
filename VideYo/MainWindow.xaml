@@ -20,6 +20,7 @@
 
         <StackPanel Grid.Column="0" Grid.Row="0" Grid.RowSpan="2">
             <Button Content="Add" Click="Add_Clicked"/>
+            <Separator Height="10" Margin="0"/>
             <Button Content="Process" Click="Process_Clicked"/>
         </StackPanel>
         <Label Grid.Column="1" Grid.Row="0">Files:</Label>
@@ -39,7 +40,6 @@
             <Label Grid.Row="0" Grid.Column="0" Content="Height"/>
             <TextBox Grid.Row="0" Grid.Column="1" Text="720" TextAlignment="Right" x:Name="HeightBox" MinWidth="40"/>
             <Label Grid.Row="1" Grid.Column="0" Content="Quality"/>
-            <!--<TextBox Grid.Row="1" Grid.Column="1" Text="5"  TextAlignment="Right" x:Name="QualityBox" />-->
             <ComboBox x:Name="QualityBox" Grid.Row="1" Grid.Column="1" SelectedIndex="5">
                 <ComboBoxItem>ultrafast</ComboBoxItem>
                 <ComboBoxItem>superfast</ComboBoxItem>
