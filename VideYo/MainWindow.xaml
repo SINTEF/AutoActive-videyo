@@ -25,7 +25,7 @@
         </StackPanel>
         <Label Grid.Column="1" Grid.Row="0">Files:</Label>
 
-        <local:FileItemDragAndDropListBox Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" x:Name="listBox" ItemsSource="{Binding}" />
+        <local:FileItemDragAndDropListBox Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" x:Name="listBox" ItemsSource="{Binding}" Drop="ListBox_OnDrop" AllowDrop="True"/>
 
         <Grid Grid.Row="2" Grid.Column="0" Grid.RowSpan="2" x:Name="SettingsGrid" HorizontalAlignment="Right">
             <Grid.ColumnDefinitions>
@@ -35,12 +35,13 @@
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition/>
+                <RowDefinition/>
             </Grid.RowDefinitions>
             
             <Label Grid.Row="0" Grid.Column="0" Content="Height"/>
             <TextBox Grid.Row="0" Grid.Column="1" Text="720" TextAlignment="Right" x:Name="HeightBox" MinWidth="40"/>
             <Label Grid.Row="1" Grid.Column="0" Content="Quality"/>
-            <ComboBox x:Name="QualityBox" Grid.Row="1" Grid.Column="1" SelectedIndex="5">
+            <ComboBox x:Name="QualityBox" Grid.Row="1" Grid.Column="1" SelectedIndex="5" MinWidth="80">
                 <ComboBoxItem>ultrafast</ComboBoxItem>
                 <ComboBoxItem>superfast</ComboBoxItem>
                 <ComboBoxItem>veryfast</ComboBoxItem>
@@ -51,6 +52,7 @@
                 <ComboBoxItem>slower</ComboBoxItem>
                 <ComboBoxItem>veryslow</ComboBoxItem>
             </ComboBox>
+            <Button Content="Save Settings" Grid.ColumnSpan="2" Grid.Row="2" Click="SaveSettingsClick"/>
         </Grid>
 
         <ProgressBar x:Name="ProgressBar" Grid.Row="3" Grid.Column="1" Height="10" Margin="0 5" VerticalAlignment="Bottom" Value="0"/>

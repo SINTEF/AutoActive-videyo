@@ -8,6 +8,7 @@ using Microsoft.Win32;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Events;
 
@@ -26,6 +27,21 @@ namespace VideYo
             InitializeComponent();
 
             listBox.DataContext = _items;
+            Loaded += OnLoaded;
+        }
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            HeightBox.Text = Properties.Settings.Default.VideoHeight.ToString();
+            var videoQualityText = Properties.Settings.Default.VideoQuality;
+            for (var index = 0; index < QualityBox.Items.Count; index++)
+            {
+                var item = QualityBox.Items[index] as ComboBoxItem;
+                if (item?.Content.ToString() == videoQualityText)
+                {
+                    QualityBox.SelectedIndex = index;
+                }
+            }
         }
 
         private async Task EnqueueFile(string fileName)
@@ -86,7 +102,7 @@ namespace VideYo
             await EnsureFfmpeg();
 
             int? height = null;
-            if (int.TryParse(HeightBox.Text, out var heightText))
+            if (int.TryParse(HeightBox.Text, out var heightText) && heightText > 0)
             {
                 height = heightText;
             }
@@ -162,6 +178,37 @@ namespace VideYo
 
             MessageBox.Show("ffmpeg.exe not found, downloading. This might take some time.");
             await FFmpeg.GetLatestVersion(true);
+        }
+
+        private async void ListBox_OnDrop(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                return;
+            }
+
+            if (!(e.Data.GetData(DataFormats.FileDrop) is string[] files)) return;
+
+            foreach (var file in files)
+            {
+                await EnqueueFile(file);
+            }
+        }
+
+        private void SaveSettingsClick(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(HeightBox.Text, out var heightText))
+            {
+                Properties.Settings.Default.VideoHeight = heightText;
+            }
+            else
+            {
+                MessageBox.Show($"Could not store video height. Value must be integer but was:{HeightBox.Text}",
+                    "Error");
+            }
+
+            Properties.Settings.Default.VideoQuality = QualityBox.Text;
+            Properties.Settings.Default.Save();
         }
     }
 
