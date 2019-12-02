@@ -26,7 +26,7 @@ namespace VideYo
         {
             InitializeComponent();
 
-            listBox.DataContext = _items;
+            ListBox.DataContext = _items;
             Loaded += OnLoaded;
         }
 
