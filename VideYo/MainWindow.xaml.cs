@@ -163,6 +163,7 @@ namespace VideYo
                 : "\" -map \"[v]\" ");
 
             conversion.AddParameter(sb.ToString());
+            conversion.AddParameter("-map_metadata 0");
             conversion.SetOutput(outputPath);
             conversion.OnProgress += ConversionOnOnProgress;
             conversion.OnDataReceived += ConversionOnOnDataReceived;
