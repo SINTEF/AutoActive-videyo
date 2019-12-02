@@ -109,9 +109,22 @@ namespace VideYo
 
             var preset = QualityBox.Text;
 
+            var origName = Path.GetFileNameWithoutExtension(_items.First().Name);
+            string fileName;
+            if (string.IsNullOrEmpty(origName))
+            {
+                fileName = "combined.mp4";
+            }
+            else
+            {
+                fileName = _items.Count == 1 ? $"{origName}_compressed.mp4" : $"{origName}_combined.mp4";
+            }
+
+
+
             var saveFileDialog = new SaveFileDialog
             {
-                DefaultExt = ".mp4", OverwritePrompt = true, FileName = "combined.mp4", Filter = "Video Files|*.mp4"
+                DefaultExt = ".mp4", OverwritePrompt = true, FileName = fileName, Filter = "Video Files|*.mp4"
             };
 
             var dialogResult = saveFileDialog.ShowDialog();
