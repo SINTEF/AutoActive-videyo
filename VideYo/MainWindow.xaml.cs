@@ -20,6 +20,7 @@ namespace VideYo
     public partial class MainWindow : Window
     {
         private readonly IList<FileItem> _items = new ObservableCollection<FileItem>();
+        private TimeSpan _currentLength;
         private TimeSpan _totalLength;
 
         public MainWindow()
@@ -91,7 +92,37 @@ namespace VideYo
             }
         }
 
-        private async void Process_Clicked(object sender, RoutedEventArgs e)
+        private void Remove_Clicked(object sender, RoutedEventArgs e)
+        {
+            if (ListBox.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Select items to remove first", "Error.");
+                return;
+            }
+            var selectedItems = ListBox.SelectedItems.Cast<FileItem>().ToList();
+            foreach (var item in selectedItems)
+            {
+                _items.Remove(item);
+            }
+        }
+
+        private string GetSaveName(string fileName, bool batchMode)
+        {
+            var origName = Path.GetFileNameWithoutExtension(fileName);
+            if (string.IsNullOrEmpty(origName))
+            {
+                return "compressed.mp4";
+            }
+
+            return batchMode || _items.Count == 1 ? $"{origName}_compressed.mp4" : $"{origName}_combined.mp4";
+        }
+
+        private string GetSavePath(string saveDir, string path)
+        {
+            return Path.Combine(saveDir, GetSaveName(path, true));
+        }
+
+        private async Task ExportVideos(bool batchMode)
         {
             if (!_items.Any())
             {
@@ -109,22 +140,14 @@ namespace VideYo
 
             var preset = QualityBox.Text;
 
-            var origName = Path.GetFileNameWithoutExtension(_items.First().Name);
-            string fileName;
-            if (string.IsNullOrEmpty(origName))
-            {
-                fileName = "combined.mp4";
-            }
-            else
-            {
-                fileName = _items.Count == 1 ? $"{origName}_compressed.mp4" : $"{origName}_combined.mp4";
-            }
-
-
+            var fileName = GetSaveName(_items.First().Name, batchMode);
 
             var saveFileDialog = new SaveFileDialog
             {
-                DefaultExt = ".mp4", OverwritePrompt = true, FileName = fileName, Filter = "Video Files|*.mp4"
+                DefaultExt = ".mp4",
+                OverwritePrompt = true,
+                FileName = fileName,
+                Filter = "Video Files|*.mp4"
             };
 
             var dialogResult = saveFileDialog.ShowDialog();
@@ -139,37 +162,97 @@ namespace VideYo
                 File.Delete(outputPath);
             }
 
-            var conversion = Conversion.New();
-            var sb = new StringBuilder();
+            var saveDir = Path.GetDirectoryName(outputPath);
+            if (batchMode)
+            {
+                if (string.IsNullOrEmpty(saveDir))
+                {
+                    MessageBox.Show("Could not get save directory.", "Error");
+                    return;
+                }
+
+                var existingFiles = _items.Select(item => GetSavePath(saveDir, item.Path))
+                    .Where(File.Exists).ToArray();
+
+                if (existingFiles.Any())
+                {
+                    var saveOk = MessageBox.Show($"The following files will be overwritten by this operation:\n{string.Join("\n",existingFiles)}\n Would you like to continue?", "Warning", MessageBoxButton.YesNo);
+                    if (saveOk != MessageBoxResult.Yes) return;
+                }
+
+                foreach (var existingFile in existingFiles)
+                {
+                    File.Delete(existingFile);
+                }
+            }
 
             _totalLength = new TimeSpan();
+            _currentLength = new TimeSpan();
             foreach (var item in _items)
             {
-               sb.Append($" -i \"{item.Path}\" ");
-               _totalLength += item.MediaInfo.Duration;
+                _totalLength += item.MediaInfo.Duration;
+            }
+
+            if (!batchMode)
+            {
+                await CombineFiles(preset, height, outputPath, _items);
+                MessageBox.Show($"Saved file:{outputPath}", "Success");
+            }
+            else
+            {
+                var outFiles = new List<string>();
+                foreach (var item in _items)
+                {
+                    var savePath = GetSavePath(saveDir, item.Path);
+                    await CombineFiles(preset, height, savePath, new List<FileItem> {item});
+                    _currentLength += item.MediaInfo.Duration;
+                    outFiles.Add(Path.GetFileName(savePath));
+                }
+
+                MessageBox.Show($"Saved files:\n{string.Join("\n", outFiles)}\n", "Success");
+            }
+
+
+        }
+
+        private async Task CombineFiles(string preset, int? height, string outputPath, ICollection<FileItem> items)
+        {
+            var sb = new StringBuilder();
+
+            foreach (var item in items)
+            {
+                sb.Append($" -i \"{item.Path}\" ");
             }
 
             sb.Append($" -c:v libx264 -preset {preset} ");
             sb.Append(" -filter_complex \"");
-            for (var i = 0; i < _items.Count; i++)
+            for (var i = 0; i < items.Count; i++)
             {
                 sb.Append($"[{i}:v] ");
             }
 
-            sb.Append($" concat=n={_items.Count}:v=1 [v] ");
+            sb.Append($" concat=n={items.Count}:v=1 [v] ");
 
             sb.Append(height.HasValue
                 ? $"; [v]scale=-1:{height.Value}:force_original_aspect_ratio=1[v2]\" -map \"[v2]\""
                 : "\" -map \"[v]\" ");
 
+            var conversion = Conversion.New();
             conversion.AddParameter(sb.ToString());
             conversion.AddParameter("-map_metadata 0");
             conversion.SetOutput(outputPath);
             conversion.OnProgress += ConversionOnOnProgress;
             conversion.OnDataReceived += ConversionOnOnDataReceived;
             await conversion.Start();
-            
-            MessageBox.Show($"Saved file:{outputPath}", "Success");
+        }
+
+        private async void Process_Clicked(object sender, RoutedEventArgs e)
+        {
+            await ExportVideos(false);
+        }
+        private async void Batch_Clicked(object sender, RoutedEventArgs e)
+        {
+            await ExportVideos(true);
         }
 
         private void ConversionOnOnDataReceived(object sender, DataReceivedEventArgs e)
@@ -180,7 +263,7 @@ namespace VideYo
         private void ConversionOnOnProgress(object sender, ConversionProgressEventArgs args)
         {
             Application.Current.Dispatcher?.Invoke(() =>
-                ProgressBar.Value = 100 * args.Duration.TotalSeconds / _totalLength.TotalSeconds);
+                ProgressBar.Value = 100 * (_currentLength.Duration().TotalSeconds + args.Duration.TotalSeconds) / _totalLength.TotalSeconds);
         }
 
         private async Task EnsureFfmpeg()
@@ -223,6 +306,11 @@ namespace VideYo
 
             Properties.Settings.Default.VideoQuality = QualityBox.Text;
             Properties.Settings.Default.Save();
+        }
+
+        private void Clear_OnClick(object sender, RoutedEventArgs e)
+        {
+            _items.Clear();
         }
     }
 
