@@ -6,15 +6,17 @@ using System.Linq;
 using System.Windows;
 using Microsoft.Win32;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using Xabe.FFmpeg;
+using Xabe.FFmpeg.Downloader;
 using Xabe.FFmpeg.Events;
 
 namespace VideYo
 {
-    // Icon made by Eucalyp from https://www.flaticon.com/free-icon/scalable_2171033#term=resize&page=1&position=6
+    // Icon made by Eucalyp from https://www.flaticon.com/free-icon/scalable_2171033
     // https://www.flaticon.com/authors/Eucalyp
 
     public partial class MainWindow : Window
@@ -49,7 +51,7 @@ namespace VideYo
         {
             try
             {
-                var info = await MediaInfo.Get(fileName);
+                var info = await FFmpeg.GetMediaInfo(fileName);
 
                 _totalLength += info.Duration;
 
@@ -237,7 +239,7 @@ namespace VideYo
                 ? $"; [v]scale=-1:{height.Value}:force_original_aspect_ratio=1[v2]\" -map \"[v2]\""
                 : "\" -map \"[v]\" ");
 
-            var conversion = Conversion.New();
+            var conversion = FFmpeg.Conversions.New();
             conversion.AddParameter(sb.ToString());
             conversion.AddParameter("-map_metadata 0");
             conversion.SetOutput(outputPath);
@@ -273,8 +275,7 @@ namespace VideYo
                 return;
             }
 
-            MessageBox.Show("ffmpeg.exe not found, downloading. This might take some time.");
-            await FFmpeg.GetLatestVersion(true);
+            await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Full);
         }
 
         private async void ListBox_OnDrop(object sender, DragEventArgs e)
@@ -311,6 +312,18 @@ namespace VideYo
         private void Clear_OnClick(object sender, RoutedEventArgs e)
         {
             _items.Clear();
+        }
+
+        private void About_Clicked(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show(
+                $"Version: {Assembly.GetEntryAssembly()?.GetName().Version}\n\n" +
+                "This tool is developed by Sigurd M. Albrektsen at SINTEF Digital\n" +
+                "Copyright: SINTEF Digital 2019-2022\n\n"+
+                "Video handling is done using Xabe.FFmpeg: https://ffmpeg.xabe.net/ \n" +
+                "Which again uses FFmpeg: https://ffmpeg.org \n" +
+                "The icon is made by Eucalyp: https://www.flaticon.com/free-icon/scalable_2171033",
+                "About");
         }
     }
 
